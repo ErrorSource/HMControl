@@ -13,6 +13,7 @@
 		563E9FC925E8038700D6FBA6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 563E9FC725E8038700D6FBA6 /* Main.storyboard */; };
 		567CD90825EA3D3500B4DD8D /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567CD90725EA3D3500B4DD8D /* Utils.swift */; };
 		567CD90C25EA422600B4DD8D /* SWXMLHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567CD90B25EA422600B4DD8D /* SWXMLHash.swift */; };
+		56A30AAF25FFA91F00951401 /* HMDevices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A30AAE25FFA91F00951401 /* HMDevices.swift */; };
 		56FE0F7225E9056900780AE5 /* HMControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FE0F7125E9056900780AE5 /* HMControl.swift */; };
 		56FE0F7625E9075000780AE5 /* EventMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FE0F7525E9075000780AE5 /* EventMonitor.swift */; };
 /* End PBXBuildFile section */
@@ -27,6 +28,7 @@
 		563E9FCB25E8038700D6FBA6 /* HMControl.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HMControl.entitlements; sourceTree = "<group>"; };
 		567CD90725EA3D3500B4DD8D /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		567CD90B25EA422600B4DD8D /* SWXMLHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWXMLHash.swift; sourceTree = "<group>"; };
+		56A30AAE25FFA91F00951401 /* HMDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HMDevices.swift; sourceTree = "<group>"; };
 		56FE0F7125E9056900780AE5 /* HMControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HMControl.swift; sourceTree = "<group>"; };
 		56FE0F7525E9075000780AE5 /* EventMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,6 +67,7 @@
 				563E9FC125E8038600D6FBA6 /* AppDelegate.swift */,
 				563E9FC325E8038600D6FBA6 /* PopupVC.swift */,
 				56FE0F7125E9056900780AE5 /* HMControl.swift */,
+				56A30AAE25FFA91F00951401 /* HMDevices.swift */,
 				567CD90725EA3D3500B4DD8D /* Utils.swift */,
 				567CD90B25EA422600B4DD8D /* SWXMLHash.swift */,
 				56FE0F7525E9075000780AE5 /* EventMonitor.swift */,
@@ -150,6 +153,7 @@
 				567CD90825EA3D3500B4DD8D /* Utils.swift in Sources */,
 				56FE0F7225E9056900780AE5 /* HMControl.swift in Sources */,
 				56FE0F7625E9075000780AE5 /* EventMonitor.swift in Sources */,
+				56A30AAF25FFA91F00951401 /* HMDevices.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

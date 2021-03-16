@@ -11,9 +11,19 @@ class PopupVC: NSViewController {
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
+	}
+	
+	override func viewDidLayout() {
+		super.viewDidLayout()
 		
-		// instantiat hmDevice(s)
-		//let hmDevices = hmDevice.all
+		// display the actual button-states on initialising
+		for (devName, devObj) in hmDevices {
+			if (devObj.hmType == "actor" && devObj.olName != "") {
+				if let buttonOl = value(forKey: devObj.olName) as? NSButton {
+					displayHMStateOnBtn(buttonOl, hmDevices[devName]!)
+				}
+			}
+		}
 	}
 	
 	override var representedObject: Any? {
@@ -25,7 +35,7 @@ class PopupVC: NSViewController {
 	/*** HM-buttons */
 	@IBOutlet weak var btnEsstisch: NSButton!
 	@IBAction func btnEsstisch(_ sender: NSButton) {
-		let btnClss = hmDevices["Esstisch"]!
+		let btnClss = hmDevices["Esstischlicht"]!
 		
 		setBreakIntervall(btnEsstisch, btnClss)
 		
@@ -64,16 +74,15 @@ class PopupVC: NSViewController {
 	}
 	
 	func displayHMStateOnBtn(_ btnTrgt: NSButton, _ reqDev: hmDevice) {
-		// get actual state
-		reqDev.getState()
-		
-		let btnColorOff = NSColor.white.cgColor
-		let btnColorOn  = NSColor.red.cgColor
-		print("TEst: \(reqDev.deviceIsOn()), State: \(String(describing: reqDev.state))")
+		/*let btnColorOff = NSColor.white.cgColor
+		let btnColorOn  = NSColor.red.cgColor*/
+		print("TEst: device: \(String(describing: reqDev.indexName())) | offOn: \(reqDev.deviceIsOn()) | State: \(String(describing: reqDev.state))")
 		if (reqDev.deviceIsOn()) {
-			btnTrgt.layer?.backgroundColor = btnColorOn
+			btnTrgt.image = NSImage(named:"btn_\(reqDev.iconType)_on")
+			//btnTrgt.layer?.backgroundColor = btnColorOn
 		} else {
-			btnTrgt.layer?.backgroundColor = btnColorOff
+			btnTrgt.image = NSImage(named:"btn_\(reqDev.iconType)_off")
+			//btnTrgt.layer?.backgroundColor = btnColorOff
 		}
 	}
 }
