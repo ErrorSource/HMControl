@@ -6,6 +6,9 @@
 //
 
 import Foundation
+import Cocoa
+
+
 
 class Utils {
 	/*static func doAsyncHTTPGetRequest(location: String) {
@@ -20,6 +23,22 @@ class Utils {
 		httpTask.resume()
 	}*/
 	
+	static func readHMStateList(location: String, completionHandler: @escaping (_ result: Data) -> ()) {
+		let request = NSMutableURLRequest(url: NSURL(string: location)! as URL)
+		let session = URLSession.shared
+		request.httpMethod = "GET"
+		
+		let task = session.dataTask(with: request as URLRequest) { (data, response, error) in
+			if data == nil {
+				print("Utils.readHMStateList.dataTaskWithRequest error: \(String(describing: error))")
+				return
+			} else {
+				completionHandler(data! as Data)
+			}
+		}
+		task.resume()
+	}
+	
 	static func setHMStateViaHTTPGetRequest(_ reqDev: hmDevice, location: String) {
 		let url = URL(string: location)!
 		if let xmlString = try? String(contentsOf: url) {
@@ -31,11 +50,6 @@ class Utils {
 		}
 	}
 	
-	// gk76: for big xml-structures:
-	//       let xml = SWXMLHash.config {
-	//           config in
-	//           config.shouldProcessLazily = true
-	//       }.parse(xmlToParse)
 	static func readXMLViaHTTPGetRequest(_ reqDev: hmDevice, location: String) {
 		let url = URL(string: location)!
 		if let xmlString = try? String(contentsOf: url) {
@@ -64,5 +78,48 @@ class Utils {
 		}
 		
 		return corrState
+	}
+}
+
+extension NSImage {
+	func scaledCopy( sizeOfLargerSide: CGFloat) ->  NSImage {
+		var newW: CGFloat
+		var newH: CGFloat
+		var scaleFactor: CGFloat
+		
+		if ( self.size.width > self.size.height) {
+			scaleFactor = self.size.width / sizeOfLargerSide
+			newW = sizeOfLargerSide
+			newH = self.size.height / scaleFactor
+		}
+		else{
+			scaleFactor = self.size.height / sizeOfLargerSide
+			newH = sizeOfLargerSide
+			newW = self.size.width / scaleFactor
+		}
+		
+		return resizedCopy(w: newW, h: newH)
+	}
+	
+	
+	func resizedCopy( w: CGFloat, h: CGFloat) -> NSImage {
+		let destSize = NSMakeSize(w, h)
+		let newImage = NSImage(size: destSize)
+		
+		newImage.lockFocus()
+		
+		self.draw(in: NSRect(origin: .zero, size: destSize),
+				  from: NSRect(origin: .zero, size: self.size),
+				  operation: .copy,
+				  fraction: CGFloat(1)
+		)
+		
+		newImage.unlockFocus()
+		
+		guard let data = newImage.tiffRepresentation,
+			  let result = NSImage(data: data)
+		else { return NSImage() }
+		
+		return result
 	}
 }
