@@ -37,6 +37,12 @@ class hmDevice {
 		Utils.readXMLViaHTTPGetRequest(_: self, location: "\(getURL)?datapoint_id=\(self.iseId)")
 	}
 	
+	func getStateFromStateList() {
+		let dtPtValue = hmDevList.getDtPtValue(searchId: hmDevices[self.indexName()]!.iseId)
+		
+		self.state = (dtPtValue != -1.0) ? dtPtValue : -1.0
+	}
+	
 	func setState(newValue: Float) {
 		let setURL = "http://10.10.10.90/addons/xmlapi/statechange.cgi"
 		
@@ -74,7 +80,6 @@ class hmDevice {
 			actualTempDev.getState()
 			
 			olTrgt.stringValue = "\(String(actualTempDev.state ?? 12.0))°C"
-			print("actualTempDev: \(String(describing: actualTempDev.state))")
 		}
 	}
 	func triggerThermMode(mode: String, olName: String) {

@@ -37,10 +37,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 		}
 		popupView.contentViewController = PopupVC.freshController()
 		
-		// read all HM-device states (for setting according icon)
-		//hmDevices["Artischocke"]?.getState()
-		//print("hmDevicesState_Artischocke: \(String(describing: hmDevices["Artischocke"]!.state))")
-		
 		// close popup, if mouse-click is outside popup (using EventMonitor)
 		eventMonitor = EventMonitor(mask: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
 			if let strongSelf = self, strongSelf.popupView.isShown {

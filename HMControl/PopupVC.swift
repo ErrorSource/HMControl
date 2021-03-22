@@ -9,24 +9,13 @@ import Cocoa
 
 class PopupVC: NSViewController {
 	
+	let backgroundQueue = DispatchQueue(label: "dataSyncQueue", attributes: .concurrent)
+	// have to wait for async-job to be finished
+	let dsptchGrp = DispatchGroup()
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
-		let dsptchGrp = DispatchGroup()
-		dsptchGrp.enter()
-		DispatchQueue.global(qos: .default).async {
-			// initiate reading and parsing of statelist via CCU-xmlapi
-			// will take some time! (asynchronous task)
-			hmDevList.startInitialReading { res in
-				hmDevList.initialReadingDone = true
-				dsptchGrp.leave()
-			}
-		}
-		
-		// wait, till asynchronous-task is done
-		dsptchGrp.wait()
-		
-		setInitialStates()
 	}
 	
 	override func viewDidLayout() {
@@ -34,9 +23,17 @@ class PopupVC: NSViewController {
 		
 	}
 	
+	override func viewWillAppear() {
+		super.viewWillAppear()
+		
+		// read and parse statelist via CCU-xmlapi and adjust according NSElements (buttons, sliders, labels...)
+		refreshHMStateList()
+	}
+	
 	override var representedObject: Any? {
 		didSet {
 			// Update the view, if already loaded.
+			
 		}
 	}
 	
@@ -159,7 +156,40 @@ class PopupVC: NSViewController {
 	}
 	//--- End Bad ---
 	
-	func setInitialStates() {
+	func refreshHMStateList() {
+		// read statelist only every 5sec minimum
+		let refreshMargin = 5
+		
+		if (hmDevList.lastReadingUTC <= 1609459200 || hmDevList.lastReadingUTC + Double(refreshMargin) < NSDate().timeIntervalSince1970) {
+			// initiate reading and parsing of statelist via CCU-xmlapi
+			// will take some time! (asynchronous task)
+			dsptchGrp.enter()
+			backgroundQueue.async {
+				hmDevList.startXMLReading { res in
+					// refresh object-state from statelist
+					for (_, devObj) in hmDevices {
+						devObj.getStateFromStateList()
+					}
+					hmDevList.initialReadingDone = true
+					print("refreshHMData: \(hmDevList.lastReadingUTC)")
+					self.dsptchGrp.leave()
+				}
+			}
+		}
+		
+		// use an asynchronous main-task to not block showup of popup
+		DispatchQueue.main.async {
+			// wait, till asynchronous background-task is finished, but - like describe above - in an other asynchronous main-task
+			self.dsptchGrp.wait()
+			// now, lets map according device-values to buttons and labels
+			if (hmDevList.initialReadingDone == true) {
+				self.setInitialStates()
+			}
+		}
+	}
+	
+	@objc func setInitialStates() {
+		print("setInitialStates: now processing!")
 		for (devName, devObj) in hmDevices {
 			// display the actual button-states on initialising
 			if (devObj.hmType == "actor" && devObj.olName != "") {
@@ -171,7 +201,6 @@ class PopupVC: NSViewController {
 			// set corresponding slider-position and labels of thermostats
 			if (devObj.hmType == "thermostat" && devObj.olName != "") {
 				DispatchQueue.main.async {
-					print(hmDevList.initialReadingDone)
 					self.setHMTempPosOnSldr(sldrTrgtOl: "sldr\(devName)", lblTrgtOl: "lblSoll\(devName)", hmDevices[devName]!)
 					self.setHMTempValueOnGauge(ggTrgtOl: "lblIst\(devName)", hmDevices[devName]!)
 				}
@@ -182,26 +211,6 @@ class PopupVC: NSViewController {
 						btnComfort.image = NSImage(named:"btn_\(hmDevices[devName]!.iconType)_\(trgtMode.lowercased())")!.resizedCopy(w: 20.0, h:20.0)
 					}
 				}
-			}
-		}
-	}
-	
-	// wait after button-press for defined time, to let HM-devices get "ready" (ramptime etc.)
-	func setBreakIntervall(_ actnTrgt: Any, _ reqDev: hmDevice) {
-		if let btnTrgt = actnTrgt as? NSButton {
-			// disable button for defined break-intervall
-			btnTrgt.isEnabled = false
-			Timer.scheduledTimer(withTimeInterval: Double(reqDev.breakSec), repeats: false) { timer in
-				btnTrgt.isEnabled = true
-				self.displayHMStateOnBtn(btnTrgt, reqDev)
-			}
-		}
-		if let sldrTrgt = actnTrgt as? NSSlider {
-			// disable button for defined break-intervall
-			sldrTrgt.isEnabled = false
-			Timer.scheduledTimer(withTimeInterval: Double(reqDev.breakSec), repeats: false) { timer in
-				sldrTrgt.isEnabled = true
-				//self.displayHMStateOnBtn(btnTrgt, reqDev)
 			}
 		}
 	}
@@ -232,6 +241,26 @@ class PopupVC: NSViewController {
 		guard let ggOl = value(forKey: ggTrgt) as? NSTextField else { return }
 		
 		reqDev.getThermActValue(olName: ggTrgt, olTrgt: ggOl)
+	}
+	
+	// wait after button-press for defined time, to let HM-devices get "ready" (ramptime etc.)
+	func setBreakIntervall(_ actnTrgt: Any, _ reqDev: hmDevice) {
+		if let btnTrgt = actnTrgt as? NSButton {
+			// disable button for defined break-intervall
+			btnTrgt.isEnabled = false
+			Timer.scheduledTimer(withTimeInterval: Double(reqDev.breakSec), repeats: false) { timer in
+				btnTrgt.isEnabled = true
+				self.displayHMStateOnBtn(btnTrgt, reqDev)
+			}
+		}
+		if let sldrTrgt = actnTrgt as? NSSlider {
+			// disable button for defined break-intervall
+			sldrTrgt.isEnabled = false
+			Timer.scheduledTimer(withTimeInterval: Double(reqDev.breakSec), repeats: false) { timer in
+				sldrTrgt.isEnabled = true
+				//self.displayHMStateOnBtn(btnTrgt, reqDev)
+			}
+		}
 	}
 }
 

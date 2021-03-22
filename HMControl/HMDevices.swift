@@ -96,13 +96,35 @@ let hmDevList = hmStateList()
 class hmStateList {
 	let stateListLocation: String = "http://10.10.10.90/config/xmlapi/statelist.cgi"
 	var initialReadingDone: Bool = false
+	var firstReadingUTC: Double = NSDate().timeIntervalSince1970
+	var lastReadingUTC: Double = 1609459200 // 1.1.2021
 	var xmlObject: XMLIndexer?
 
-	func startInitialReading(completionHandler: @escaping (_ response : XMLIndexer) -> ()) {
+	func startXMLReading(completionHandler: @escaping (_ response : XMLIndexer) -> ()) {
+		self.initialReadingDone = false
 		Utils.readHMStateList(location: stateListLocation) { (result) in
 			self.xmlObject = SWXMLHash.lazy(result)
+			self.lastReadingUTC = NSDate().timeIntervalSince1970
 			completionHandler(self.xmlObject!)
 		};
+	}
+	
+	func getDtPtValue(searchId: Int) -> Float {
+		let xmlStruct = self.xmlObject
+		
+		for device in xmlStruct!["stateList"]["device"].all {
+			for channel in device["channel"].all {
+				let trgtChannel = channel
+				for datapoint in channel["datapoint"].all {
+					if (datapoint.element?.attribute(by: "ise_id")?.text == String(searchId)) {
+						guard let trgtValue = try? trgtChannel["datapoint"].withAttribute("ise_id", "\(searchId)").element?.attribute(by: "value")?.text else { return -1.0 }
+						return (Float(Utils.calcState(trgtState: String(trgtValue))))
+					}
+				}
+			}
+		}
+		// nothing found?
+		return -1.0
 	}
 	
 	func getThermDtPtViaIseId(searchId: Int, searchMode: String) -> Int {
