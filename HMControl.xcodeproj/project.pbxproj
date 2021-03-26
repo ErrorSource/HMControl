@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		56346D6B2609EECA006827E5 /* PopupElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56346D6A2609EECA006827E5 /* PopupElements.swift */; };
 		563E9FC225E8038600D6FBA6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563E9FC125E8038600D6FBA6 /* AppDelegate.swift */; };
 		563E9FC425E8038600D6FBA6 /* PopupVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563E9FC325E8038600D6FBA6 /* PopupVC.swift */; };
 		563E9FC625E8038700D6FBA6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 563E9FC525E8038700D6FBA6 /* Assets.xcassets */; };
@@ -14,11 +15,13 @@
 		567CD90825EA3D3500B4DD8D /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567CD90725EA3D3500B4DD8D /* Utils.swift */; };
 		567CD90C25EA422600B4DD8D /* SWXMLHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567CD90B25EA422600B4DD8D /* SWXMLHash.swift */; };
 		56A30AAF25FFA91F00951401 /* HMDevices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A30AAE25FFA91F00951401 /* HMDevices.swift */; };
+		56E39824260C9637009301D3 /* NSExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E39823260C9637009301D3 /* NSExtensions.swift */; };
 		56FE0F7225E9056900780AE5 /* HMControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FE0F7125E9056900780AE5 /* HMControl.swift */; };
 		56FE0F7625E9075000780AE5 /* EventMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FE0F7525E9075000780AE5 /* EventMonitor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		56346D6A2609EECA006827E5 /* PopupElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupElements.swift; sourceTree = "<group>"; };
 		563E9FBE25E8038600D6FBA6 /* HMControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HMControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		563E9FC125E8038600D6FBA6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		563E9FC325E8038600D6FBA6 /* PopupVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupVC.swift; sourceTree = "<group>"; };
@@ -29,6 +32,7 @@
 		567CD90725EA3D3500B4DD8D /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		567CD90B25EA422600B4DD8D /* SWXMLHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWXMLHash.swift; sourceTree = "<group>"; };
 		56A30AAE25FFA91F00951401 /* HMDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HMDevices.swift; sourceTree = "<group>"; };
+		56E39823260C9637009301D3 /* NSExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSExtensions.swift; sourceTree = "<group>"; };
 		56FE0F7125E9056900780AE5 /* HMControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HMControl.swift; sourceTree = "<group>"; };
 		56FE0F7525E9075000780AE5 /* EventMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -66,9 +70,11 @@
 				563E9FC725E8038700D6FBA6 /* Main.storyboard */,
 				563E9FC125E8038600D6FBA6 /* AppDelegate.swift */,
 				563E9FC325E8038600D6FBA6 /* PopupVC.swift */,
+				56346D6A2609EECA006827E5 /* PopupElements.swift */,
 				56FE0F7125E9056900780AE5 /* HMControl.swift */,
 				56A30AAE25FFA91F00951401 /* HMDevices.swift */,
 				567CD90725EA3D3500B4DD8D /* Utils.swift */,
+				56E39823260C9637009301D3 /* NSExtensions.swift */,
 				567CD90B25EA422600B4DD8D /* SWXMLHash.swift */,
 				56FE0F7525E9075000780AE5 /* EventMonitor.swift */,
 				563E9FC525E8038700D6FBA6 /* Assets.xcassets */,
@@ -148,12 +154,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				563E9FC425E8038600D6FBA6 /* PopupVC.swift in Sources */,
+				56E39824260C9637009301D3 /* NSExtensions.swift in Sources */,
 				567CD90C25EA422600B4DD8D /* SWXMLHash.swift in Sources */,
 				563E9FC225E8038600D6FBA6 /* AppDelegate.swift in Sources */,
 				567CD90825EA3D3500B4DD8D /* Utils.swift in Sources */,
 				56FE0F7225E9056900780AE5 /* HMControl.swift in Sources */,
 				56FE0F7625E9075000780AE5 /* EventMonitor.swift in Sources */,
 				56A30AAF25FFA91F00951401 /* HMDevices.swift in Sources */,
+				56346D6B2609EECA006827E5 /* PopupElements.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

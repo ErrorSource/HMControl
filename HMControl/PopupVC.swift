@@ -12,15 +12,27 @@ class PopupVC: NSViewController {
 	let backgroundQueue = DispatchQueue(label: "dataSyncQueue", attributes: .concurrent)
 	// have to wait for async-job to be finished
 	let dsptchGrp = DispatchGroup()
+	// completion-handler-helper
+	typealias finishedCreatingIBElements = () -> ()
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
+		// dynamically create elements defined in HMDevices list
+		createIBElements() { () -> () in
+			print("createIBElements completed!")
+		}
 	}
 	
 	override func viewDidLayout() {
 		super.viewDidLayout()
 		
+		// buttons-stackview (first grouped stackview) has a margin of 40px from top; use this also at bottom; plus spacing of 40px between
+		let margins: Int = (40 * 3)
+		// calculate the overall height of top-stackviews + margin
+		let ovrllHght: Int = (self.getSVsOverallHeight() + margins)
+		// set ViewControllers height to it
+		self.view.heightAnchor.constraint(equalToConstant: CGFloat(ovrllHght)).isActive = true
 	}
 	
 	override func viewWillAppear() {
@@ -37,124 +49,137 @@ class PopupVC: NSViewController {
 		}
 	}
 	
-	//*** HM-buttons ***
-	@IBOutlet weak var btnEsstisch: NSButton!
-	@IBAction func btnEsstisch(_ sender: NSButton) {
-		setBreakIntervall(btnEsstisch!, hmDevices["Esstischlicht"]!)
+	// create views --------------------------------------------------------
+	func createIBElements(completed: finishedCreatingIBElements) {
+		var svBtnGrp = [Int: [NSButton]]()
+		var svThrmGrp = [Int: [NSStackView]]()
+		var svThrmGrpName = [Int: String]()
+		
+		let sorted_hmDevices = hmDevices.sorted(by: {
+			(hmDevices[$0.key]!.btnGrp, hmDevices[$0.key]!.orderId) < (hmDevices[$1.key]!.btnGrp, hmDevices[$1.key]!.orderId)
+		})
+		
+		// iterate through hmDevices and sort them into according stackview-"groups"
+		for (devName, devObj) in sorted_hmDevices {
+			// create actor-buttons (toggle)
+			if (devObj.hmType == "actor" && devObj.btnGrp != 0) {
+				let hmBtn = createHMToggleButton(devName: devName, devObj: devObj)
+				
+				// add button to button-group (within dictionary)
+				// (there is only place for 4 buttons; do not process more)
+				if (devObj.orderId <= 4) {
+					//btnGrp.append(hmBtn)
+					if var btnGrp = svBtnGrp[devObj.btnGrp] {
+						btnGrp.append(hmBtn)
+						svBtnGrp[devObj.btnGrp] = btnGrp
+					} else {
+						svBtnGrp[devObj.btnGrp] = [hmBtn]
+					}
+				}
+			}
+			// create thermostat-groups (each a stackview)
+			if (devObj.hmType == "thermostat") {
+				let hmThrmSldr = createHMThrmSliderSV(devName: devName, devObj: devObj)
+				
+				// add thermostate-group to stackview-group (within dictionary)
+				if var thrmGrp = svThrmGrp[devObj.orderId] {
+					thrmGrp.append(hmThrmSldr)
+					svThrmGrp[devObj.orderId] = thrmGrp
+					svThrmGrpName[devObj.orderId] = devName
+				} else {
+					svThrmGrp[devObj.orderId] = [hmThrmSldr]
+					svThrmGrpName[devObj.orderId] = devName
+				}
+			}
+		}
+		
+		// create parent-buttons-stackview (vertical)
+		let hmBntPrntSV = createHMBtnParentStackview()
+		// add parent-buttons-stackview to main view
+		self.view.addSubview(hmBntPrntSV)
+		
+		// create parent-thermostat-stackview (vertical)
+		let hmThrmSldrPrntSV = createHMThrmSldrParentStackview()
+		// add parent-buttons-stackview to main view
+		self.view.addSubview(hmThrmSldrPrntSV)
+		
+		// create sub-stackview(s) and add button-group(s)
+		for (_, btnGrpObj) in svBtnGrp.sorted(by: { $0.0 < $1.0 }) {
+			let hmBtnGrpSV = createHMBtnGrpStackview(btnGrpObj: btnGrpObj)
+			// add subviews to parent-stackview
+			hmBntPrntSV.addArrangedSubview(hmBtnGrpSV)
+		}
+		
+		// create sub-stackview(s) and add thermostat-group(s)
+		for (thrmGrpId, thrmGrpSV) in svThrmGrp.sorted(by: { $0.0 < $1.0 }) {
+			// add label on top of thermostate-group (inside parent-stackview)
+			let hmThrmGrpLbl = createHMThrmGrpLabel(devName: svThrmGrpName[thrmGrpId]!)
+			hmThrmSldrPrntSV.addArrangedSubview(hmThrmGrpLbl)
+			
+			let hmThrmGrpSV = createHMThrmGrpStackview(thrmGrpSV: thrmGrpSV)
+			// add subviews to parent-stackview
+			hmThrmSldrPrntSV.addArrangedSubview(hmThrmGrpSV)
+			// constraints for sub-stackview
+			constrainsHMThrmSldrGrpStackview(hmThrmSldrGrpSV: hmThrmGrpSV, subView: hmThrmSldrPrntSV)
+		}
+		
+		// constraints for parent-stackview
+		constrainsHMBtnParentStackview(hmBntPrntSV: hmBntPrntSV, popupView: self.view)
+		
+		// constraints for parent-thermostat-stackview
+		constrainsHMThrmSldrParentStackview(hmThrmSldrPrntSV: hmThrmSldrPrntSV, hmBntPrntSV: hmBntPrntSV, popupView: self.view)
+		
+		// return "signal" for completion-handler
+		completed()
+	}
+	// end create views ----------------------------------------------------
+	
+	@objc func hmBtnActionToggle(_ sender: NSButton) {
+		setActionBreakIntervall(sender, hmDevices[sender.title]!)
 		
 		// toggle state of according HM-device
-		hmDevices["Esstischlicht"]!.toggleState()
+		hmDevices[sender.title]!.toggleState()
 	}
 	
-	@IBOutlet weak var btnArtischocke: NSButton!
-	@IBAction func btnArtischocke(_ sender: NSButton) {
-		setBreakIntervall(btnArtischocke!, hmDevices["Artischocke"]!)
+	@objc func hmSldrThermAction(_ sender: NSSlider) {
+		// get parent-object thermostat
+		let prntIseId = sender.objIdntfr!.capturedGroups(withRegex: "^([0-9]*)_")[0] // take first matched group of array; there should be only one
 		
-		// toggle state of according HM-device
-		hmDevices["Artischocke"]!.toggleState()
-	}
-	
-	@IBOutlet weak var btnTVLicht: NSButton!
-	@IBAction func btnTVLicht(_ sender: NSButton) {
-		setBreakIntervall(btnTVLicht!, hmDevices["TV-Licht"]!)
+		// update soll-lbl on every change
+		let trgtViewLbl = getViewElementByObjIdntfr(objIdntfr: "\(prntIseId)_sollLbl")! as NSView
+		guard let sollLbl = trgtViewLbl as? NSTextField else { return }
 		
-		// toggle state of according HM-device
-		hmDevices["TV-Licht"]!.toggleState()
+		sollLbl.stringValue = sender.stringValue.temperatureString
+		sollLbl.textColor = (sollLbl.objStoredVal! != sender.stringValue.temperatureString) ? NSColor.red : NSColor.white
+		
+		// perform statechange only, if slider-position changed (not the same value as before) and after mouse-button was released
+		let event = NSApplication.shared.currentEvent
+		if (event?.type == NSEvent.EventType.leftMouseUp) {
+			for (_, devObj) in hmDevices {
+				if (devObj.iseId == Int(prntIseId)! && devObj.state != sender.floatValue) {
+					setActionBreakIntervall(sender, hmDevices[devObj.indexName()]!)
+					
+					sollLbl.textColor = NSColor.white
+					hmDevices[devObj.indexName()]!.setState(newValue: sender.floatValue)
+				}
+			}
+		}
 	}
 	
-	//*** HM-sliders ***
-	//--- Wohnzimmer ---
-	@IBOutlet weak var lblIstWohnzimmer: NSTextField!
-	@IBOutlet weak var lblSollWohnzimmer: NSTextField!
-	@IBOutlet weak var sldrWohnzimmer: NSSlider!
-	@IBAction func sldrWohnzimmer(_ sender: NSSlider) {
-		setBreakIntervall(sldrWohnzimmer!, hmDevices["Wohnzimmer"]!)
-
-		// get value from slider and set target temperature of according HM-device
-		hmDevices["Wohnzimmer"]!.setState(newValue: sldrWohnzimmer.floatValue)
-		lblSollWohnzimmer.stringValue = "\(String(sldrWohnzimmer.floatValue))°C"
+	@objc func hmCtrlBtnThermAction(_ sender: NSButton) {
+		// get parent-object thermostat
+		let prntIseId = sender.objIdntfr!.capturedGroups(withRegex: "^([0-9]*)_")[0] // take first matched group of array; there should be only one
+		
+		for (_, devObj) in hmDevices {
+			if (devObj.iseId == Int(prntIseId)! && devObj.state != sender.floatValue) {
+				setActionBreakIntervall(sender, hmDevices[devObj.indexName()]!)
+				
+				hmDevices[devObj.indexName()]!.triggerThermMode(mode: sender.objStoredVal!)
+				hmDevices[devObj.indexName()]!.getState()
+				setHMTempPosOnSldr(devObj: hmDevices[devObj.indexName()]!)
+			}
+		}
 	}
-	// comfort-, lowering-, boost-button
-	@IBOutlet weak var btnWohnzimmerComfort: NSButton!
-	@IBAction func btnWohnzimmerComfort(_ sender: NSButton) {
-		hmDevices["Wohnzimmer"]!.triggerThermMode(mode: "Comfort", olName: "btnWohnzimmerComfort")
-		hmDevices["Wohnzimmer"]!.getState()
-		setHMTempPosOnSldr(sldrTrgtOl: "sldrWohnzimmer", lblTrgtOl: "lblSollWohnzimmer", hmDevices["Wohnzimmer"]!)
-	}
-	@IBOutlet weak var btnWohnzimmerLowering: NSButton!
-	@IBAction func btnWohnzimmerLowering(_ sender: NSButton) {
-		hmDevices["Wohnzimmer"]!.triggerThermMode(mode: "Lowering", olName: "btnWohnzimmerLowering")
-		hmDevices["Wohnzimmer"]!.getState()
-		setHMTempPosOnSldr(sldrTrgtOl: "sldrWohnzimmer", lblTrgtOl: "lblSollWohnzimmer", hmDevices["Wohnzimmer"]!)
-	}
-	@IBOutlet weak var btnWohnzimmerBoost: NSButton!
-	@IBAction func btnWohnzimmerBoost(_ sender: NSButton) {
-		hmDevices["Wohnzimmer"]!.triggerThermMode(mode: "Boost", olName: "btnWohnzimmerBoost")
-		// display boost-mode via button for 600secs long?
-	}
-	//--- End Wohnzimmer ---
-	
-	//--- Galerie ---
-	@IBOutlet weak var lblIstGalerie: NSTextField!
-	@IBOutlet weak var lblSollGalerie: NSTextField!
-	@IBOutlet weak var sldrGalerie: NSSlider!
-	@IBAction func sldrGalerie(_ sender: NSSlider) {
-		setBreakIntervall(sldrGalerie!, hmDevices["Galerie"]!)
-
-		// get value from slider and set target temperature of according HM-device
-		hmDevices["Galerie"]!.setState(newValue: sldrGalerie.floatValue)
-		lblSollGalerie.stringValue = "\(String(sldrGalerie.floatValue))°C"
-	}
-	// comfort-, lowering-, boost-button
-	@IBOutlet weak var btnGalerieComfort: NSButton!
-	@IBAction func btnGalerieComfort(_ sender: NSButton) {
-		hmDevices["Galerie"]!.triggerThermMode(mode: "Comfort", olName: "btnGalerieComfort")
-		hmDevices["Galerie"]!.getState()
-		setHMTempPosOnSldr(sldrTrgtOl: "sldrGalerie", lblTrgtOl: "lblSollGalerie", hmDevices["Galerie"]!)
-	}
-	@IBOutlet weak var btnGalerieLowering: NSButton!
-	@IBAction func btnGalerieLowering(_ sender: NSButton) {
-		hmDevices["Galerie"]!.triggerThermMode(mode: "Lowering", olName: "btnGalerieLowering")
-		hmDevices["Galerie"]!.getState()
-		setHMTempPosOnSldr(sldrTrgtOl: "sldrGalerie", lblTrgtOl: "lblSollGalerie", hmDevices["Galerie"]!)
-	}
-	@IBOutlet weak var btnGalerieBoost: NSButton!
-	@IBAction func btnGalerieBoost(_ sender: NSButton) {
-		hmDevices["Galerie"]!.triggerThermMode(mode: "Boost", olName: "btnGalerieBoost")
-		// display boost-mode via button for 600secs long?
-	}
-	//--- End Galerie ---
-	
-	//--- Bad ---
-	@IBOutlet weak var lblIstBad: NSTextField!
-	@IBOutlet weak var lblSollBad: NSTextField!
-	@IBOutlet weak var sldrBad: NSSlider!
-	@IBAction func sldrBad(_ sender: NSSlider) {
-		setBreakIntervall(sldrBad!, hmDevices["Bad"]!)
-
-		// get value from slider and set target temperature of according HM-device
-		hmDevices["Bad"]!.setState(newValue: sldrBad.floatValue)
-		lblSollBad.stringValue = "\(String(sldrBad.floatValue))°C"
-	}
-	// comfort-, lowering-, boost-button
-	@IBOutlet weak var btnBadComfort: NSButton!
-	@IBAction func btnBadComfort(_ sender: NSButton) {
-		hmDevices["Bad"]!.triggerThermMode(mode: "Comfort", olName: "btnBadComfort")
-		hmDevices["Bad"]!.getState()
-		setHMTempPosOnSldr(sldrTrgtOl: "sldrBad", lblTrgtOl: "lblSollBad", hmDevices["Bad"]!)
-	}
-	@IBOutlet weak var btnBadLowering: NSButton!
-	@IBAction func btnBadLowering(_ sender: NSButton) {
-		hmDevices["Bad"]!.triggerThermMode(mode: "Lowering", olName: "btnBadLowering")
-		hmDevices["Bad"]!.getState()
-		setHMTempPosOnSldr(sldrTrgtOl: "sldrBad", lblTrgtOl: "lblSollBad", hmDevices["Bad"]!)
-	}
-	@IBOutlet weak var btnBadBoost: NSButton!
-	@IBAction func btnBadBoost(_ sender: NSButton) {
-		hmDevices["Bad"]!.triggerThermMode(mode: "Boost", olName: "btnBadBoost")
-		// display boost-mode via button for 600secs long?
-	}
-	//--- End Bad ---
 	
 	func refreshHMStateList() {
 		// read statelist only every 5sec minimum
@@ -171,86 +196,83 @@ class PopupVC: NSViewController {
 						devObj.getStateFromStateList()
 					}
 					hmDevList.initialReadingDone = true
-					print("refreshHMData: \(hmDevList.lastReadingUTC)")
+					
 					self.dsptchGrp.leave()
 				}
 			}
 		}
 		
 		// use an asynchronous main-task to not block showup of popup
+		// (outlets can only be accessed from within main-task!)
 		DispatchQueue.main.async {
 			// wait, till asynchronous background-task is finished, but - like describe above - in an other asynchronous main-task
 			self.dsptchGrp.wait()
 			// now, lets map according device-values to buttons and labels
 			if (hmDevList.initialReadingDone == true) {
-				self.setInitialStates()
+				self.mapStatesToDevices()
 			}
 		}
 	}
 	
-	@objc func setInitialStates() {
-		print("setInitialStates: now processing!")
+	@objc func mapStatesToDevices() {
+		
 		for (devName, devObj) in hmDevices {
 			// display the actual button-states on initialising
-			if (devObj.hmType == "actor" && devObj.olName != "") {
-				if let buttonOl = value(forKey: devObj.olName) as? NSButton {
-					displayHMStateOnBtn(buttonOl, hmDevices[devName]!)
+			if (devObj.hmType == "actor") {
+				DispatchQueue.main.async {
+					self.displayHMStateOnBtn(devObj: devObj)
 				}
 			}
 			
 			// set corresponding slider-position and labels of thermostats
-			if (devObj.hmType == "thermostat" && devObj.olName != "") {
+			if (devObj.hmType == "thermostat") {
 				DispatchQueue.main.async {
-					self.setHMTempPosOnSldr(sldrTrgtOl: "sldr\(devName)", lblTrgtOl: "lblSoll\(devName)", hmDevices[devName]!)
-					self.setHMTempValueOnGauge(ggTrgtOl: "lblIst\(devName)", hmDevices[devName]!)
-				}
+					self.setHMTempPosOnSldr(devObj: devObj)
+					self.setHMTempValueOnGauge(devObj: devObj)
 				
-				// initially assign the image of comfort-, lowering-, boost-button
-				for trgtMode in ["Comfort", "Lowering", "Boost"] {
-					if let btnComfort = value(forKey: "btn\(hmDevices[devName]!.indexName())\(trgtMode)") as? NSButton {
-						btnComfort.image = NSImage(named:"btn_\(hmDevices[devName]!.iconType)_\(trgtMode.lowercased())")!.resizedCopy(w: 20.0, h:20.0)
+					// initially assign the image of comfort-, lowering-, boost-button
+					for trgtMode in ["Comfort", "Lowering", "Boost"] {
+						let trgtView = self.getViewElementByObjIdntfr(objIdntfr: "\(devObj.iseId)_\(trgtMode)Btn")! as NSView
+						guard let hmModeBtn = trgtView as? NSButton else { return }
+						hmModeBtn.image = NSImage(named:"btn_\(hmDevices[devName]!.iconType)_\(trgtMode.lowercased())")!.resizedCopy(w: 20.0, h:20.0)
 					}
 				}
 			}
 		}
 	}
 	
-	func displayHMStateOnBtn(_ btnTrgt: NSButton, _ reqDev: hmDevice) {
-		/*let btnColorOff = NSColor.white.cgColor
-		let btnColorOn  = NSColor.red.cgColor*/
-		//print("displayHMStateOnBtn: device: \(String(describing: reqDev.indexName())) | offOn: \(reqDev.deviceIsOn()) | State: \(String(describing: reqDev.state))")
-		if (reqDev.deviceIsOn()) {
-			btnTrgt.image = NSImage(named:"btn_\(reqDev.iconType)_on")!.resizedCopy(w: 50.0, h:50.0)
-			//btnTrgt.layer?.backgroundColor = btnColorOn
-		} else {
-			btnTrgt.image = NSImage(named:"btn_\(reqDev.iconType)_off")!.resizedCopy(w: 50.0, h:50.0)
-			//btnTrgt.layer?.backgroundColor = btnColorOff
-		}
+	func displayHMStateOnBtn(devObj: hmDevice) {
+		let trgtView = getViewElementByObjIdntfr(objIdntfr: "\(devObj.iseId)_tgglBtn")! as NSView
+		guard let hmBtn = trgtView as? NSButton else { return }
+		let hmBtnState: String = (devObj.deviceIsOn()) ? "on" : "off"
+		hmBtn.image = NSImage(named:"btn_\(devObj.iconType)_\(hmBtnState)")!.resizedCopy(w: 40.0, h:40.0)
 	}
 	
-	func setHMTempPosOnSldr(sldrTrgtOl sldrTrgt: String, lblTrgtOl lblTrgt: String, _ reqDev: hmDevice) {
-		guard let sldrOl = value(forKey: sldrTrgt) as? NSSlider else { return }
-		guard let lblOl = value(forKey: lblTrgt) as? NSTextField else { return }
+	func setHMTempPosOnSldr(devObj: hmDevice) {
+		let trgtViewSldr = getViewElementByObjIdntfr(objIdntfr: "\(devObj.iseId)_sollSldr")! as NSView
+		let trgtViewLbl = getViewElementByObjIdntfr(objIdntfr: "\(devObj.iseId)_sollLbl")! as NSView
+		guard let sollSldr = trgtViewSldr as? NSSlider else { return }
+		guard let sollLbl = trgtViewLbl as? NSTextField else { return }
 		
-		//print("setHMTempPosOnSldr: device: \(String(describing: reqDev.indexName())) | State: \(String(describing: reqDev.state))")
-		sldrOl.floatValue = reqDev.state ?? 19.0
-		lblOl.stringValue = "\(String(reqDev.state ?? 12.0))°C"
+		sollSldr.floatValue = devObj.state ?? 19.0
+		sollLbl.stringValue = String(devObj.state!).temperatureString
 	}
 	
-	func setHMTempValueOnGauge(ggTrgtOl ggTrgt: String, _ reqDev: hmDevice) {
-		guard let ggOl = value(forKey: ggTrgt) as? NSTextField else { return }
-		
-		reqDev.getThermActValue(olName: ggTrgt, olTrgt: ggOl)
+	func setHMTempValueOnGauge(devObj: hmDevice) {
+		let trgtView = getViewElementByObjIdntfr(objIdntfr: "\(devObj.iseId)_istLbl")! as NSView
+		guard let txtFld = trgtView as? NSTextField else { return }
+		// get actual determined temperatur of hmdevice from statelist and set it on devices "ist-label"
+		txtFld.stringValue = String(devObj.getThermActValue()).temperatureString
 	}
 	
 	// wait after button-press for defined time, to let HM-devices get "ready" (ramptime etc.)
-	func setBreakIntervall(_ actnTrgt: Any, _ reqDev: hmDevice) {
+	func setActionBreakIntervall(_ actnTrgt: Any, _ reqDev: hmDevice) {
 		if let btnTrgt = actnTrgt as? NSButton {
 			// disable button for defined break-intervall
 			btnTrgt.isEnabled = false
 			Timer.scheduledTimer(withTimeInterval: Double(reqDev.breakSec), repeats: false) { timer in
 				btnTrgt.isEnabled = true
-				self.displayHMStateOnBtn(btnTrgt, reqDev)
+				self.displayHMStateOnBtn(devObj: reqDev)
 			}
 		}
 		if let sldrTrgt = actnTrgt as? NSSlider {
@@ -258,7 +280,7 @@ class PopupVC: NSViewController {
 			sldrTrgt.isEnabled = false
 			Timer.scheduledTimer(withTimeInterval: Double(reqDev.breakSec), repeats: false) { timer in
 				sldrTrgt.isEnabled = true
-				//self.displayHMStateOnBtn(btnTrgt, reqDev)
+				self.setHMTempPosOnSldr(devObj: reqDev)
 			}
 		}
 	}

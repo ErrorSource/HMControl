@@ -14,49 +14,95 @@ extension hmDevice {
 	
 	// iseId:    (int)          unique identifier-ID of Homematic device
 	// hmType:                  actor = toggle | thermostat = slider | gauge = value in label | trigger = oneshot | ...
-	// olName:                  outlet-name; has to be the name of corresponding outlet!
+	// btnGrp:   (int)          group buttons in stackview (max. 4 buttons!)
+	// orderId:  (int)          order of buttons/thermostats within stackviews
 	// iconType:                part of image name 'btn_{iconType}_[off_on_unkown]'
 	// minVal:   (float;  0.0)  minimum value, device can inherit
 	// maxVal:   (float;  1.0)  maximum value, device can inherit
 	// breakSec: (int;      1)  some devices need some time, till they can "react" again (because of ramp-time etc.)
 	// state:    (float; -1.0)  actual state of device (-1.0 = "state could not be determined")
 	
-	static let definition: [String: hmDevice] =  [
+	static let definition: [String: hmDevice] = [
 		// *** lights ***
+		// group 1 ---------------------------------
+		"Leuchtkugel": hmDevice(
+			iseId: 1894,
+			hmType: "actor",
+			btnGrp: 1,
+			orderId: 1,
+			iconType: "LightBulb"
+		),
 		"Artischocke": hmDevice(
 			iseId: 1687,
 			hmType: "actor",
-			olName: "btnArtischocke",
+			btnGrp: 1,
+			orderId: 2,
 			iconType: "LightBulb"
 		),
 		"Sofa Leselicht": hmDevice(
 			iseId: 2060,
 			hmType: "actor",
-			olName: "",
+			btnGrp: 1,
+			orderId: 3,
 			iconType: "LightBulb"
 		),
+		
+		// group 2 ---------------------------------
 		"Esstischlicht": hmDevice(
 			iseId: 56153,
 			hmType: "actor",
-			olName: "btnEsstisch",
+			btnGrp: 2,
+			orderId: 1,
 			iconType: "CeilLight",
 			maxVal: 0.1,
 			breakSec: 3
 		),
+		// group 3 ---------------------------------
+		"Licht oben": hmDevice(
+			iseId: 46134,
+			hmType: "actor",
+			btnGrp: 3,
+			orderId: 1,
+			iconType: "LightBulb"
+		),
+		"Leselicht oben": hmDevice(
+			iseId: 2186,
+			hmType: "actor",
+			btnGrp: 3,
+			orderId: 2,
+			iconType: "LightBulb"
+		),
 		"TV-Licht": hmDevice(
 			iseId: 33309,
 			hmType: "actor",
-			olName: "btnTVLicht",
+			btnGrp: 3,
+			orderId: 3,
 			iconType: "LightBulb",
 			breakSec: 5
 		),
 		
-		// *** other actors ***
+		// group 3 ---------------------------------
+		// *** other actors/progs ***
+		"Stereoanlage": hmDevice(
+			iseId: 1997,
+			hmType: "actor",
+			btnGrp: 4,
+			orderId: 2,
+			iconType: "LightBulb"
+		),
+		"Mucke aufwecken": hmDevice(
+			iseId: 11008,
+			hmType: "actor",
+			btnGrp: 4,
+			orderId: 2,
+			iconType: "LightBulb"
+		),
 		"Drucker": hmDevice(
 			iseId: 52613,
 			hmType: "actor",
-			olName: "",
-			iconType: "LightBulb",
+			btnGrp: 4,
+			orderId: 1,
+			iconType: "Printer",
 			breakSec: 3
 		),
 		
@@ -64,7 +110,7 @@ extension hmDevice {
 		"Wohnzimmer": hmDevice(
 			iseId: 4011,
 			hmType: "thermostat",
-			olName: "sldrWohnzimmer",
+			orderId: 1,
 			iconType: "Thermostat",
 			minVal: 19.0,
 			maxVal: 23.0,
@@ -73,7 +119,7 @@ extension hmDevice {
 		"Galerie": hmDevice(
 			iseId: 17480,
 			hmType: "thermostat",
-			olName: "sldrGalerie",
+			orderId: 2,
 			iconType: "Thermostat",
 			minVal: 19.0,
 			maxVal: 23.0,
@@ -82,12 +128,12 @@ extension hmDevice {
 		"Bad": hmDevice(
 			iseId: 6534,
 			hmType: "thermostat",
-			olName: "sldrBad",
+			orderId: 3,
 			iconType: "Thermostat",
 			minVal: 19.0,
 			maxVal: 23.0,
 			breakSec: 3
-		),
+		)
 	]
 }
 
